@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>개당 단가 계산기</title>
+  <meta name="description" content="총 금액과 개수를 입력하면 개당 단가를 바로 계산해 줍니다.">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <meta name="apple-mobile-web-app-title" content="단가계산">
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      --best: #10b981;
+      --best-light: #ecfdf5;
+      --best-border: #a7f3d0;
+      --bg-app: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 25px -4px rgba(59, 130, 246, 0.2);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-full: 9999px;
+      --font-main: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Segoe UI", Roboto, sans-serif;
+      --font-num: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body { background: var(--bg-app); overscroll-behavior-y: none; }
+
+    body {
+      font-family: var(--font-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: max(48px, calc(env(safe-area-inset-top) + 20px)) 14px max(40px, env(safe-area-inset-bottom)) 14px;
+      line-height: 1.5;
+    }
+
+    .app-layout { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* Header */
+    .app-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 2px; }
+    .header-title-wrap { display: flex; align-items: center; gap: 10px; }
+    .action-btn {
+      background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main);
+      height: 38px; padding: 0 12px; border-radius: var(--radius-md);
+      display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: var(--shadow-sm);
+      font-family: var(--font-main); font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { background: #f1f5f9; }
+    .action-btn:active svg { transform: rotate(180deg); }
+    .action-btn svg { transition: transform 0.3s; }
+    .header-icon {
+      font-size: 1.6rem; background: var(--card-bg); border: 1px solid var(--card-border);
+      width: 44px; height: 44px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);
+    }
+    .header-title { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
+    .header-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* Result card */
+    .result-card {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #ffffff; border-radius: var(--radius-lg); padding: 22px 24px;
+      box-shadow: var(--shadow-lg);
+    }
+    .result-label { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.88); }
+    .result-row { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
+    .result-number {
+      font-family: var(--font-num); font-size: 2.4rem; font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1.15; word-break: break-all;
+    }
+    .result-unit { font-size: 1.1rem; font-weight: 700; color: rgba(255, 255, 255, 0.9); }
+    .result-formula {
+      margin-top: 8px; display: inline-block; background: rgba(0, 0, 0, 0.2);
+      padding: 4px 12px; border-radius: var(--radius-full);
+      font-size: 0.8rem; font-weight: 600; font-family: var(--font-num);
+    }
+
+    /* Input card */
+    .input-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg); padding: 18px 20px; box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .form-grid { display: flex; gap: 10px; }
+    .field-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .flex-3 { flex: 3; } .flex-2 { flex: 2; } .flex-1 { flex: 1; }
+    .field-title { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+    .field-col input {
+      width: 100%; background: #f8fafc; border: 1.5px solid var(--card-border);
+      border-radius: var(--radius-md); padding: 13px 12px;
+      font-family: var(--font-num); font-size: 1.05rem; font-weight: 700;
+      color: var(--text-main); outline: none; transition: all 0.2s;
+    }
+    .field-col input.text { font-family: var(--font-main); font-weight: 500; font-size: 0.95rem; }
+    .field-col input:focus {
+      border-color: var(--primary); background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    #qtyInput { text-align: center; }
+
+    .btn-row { display: flex; gap: 8px; }
+    .btn {
+      flex: 1; border: none; border-radius: var(--radius-md); padding: 12px;
+      font-family: var(--font-main); font-size: 0.92rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-main { background: var(--text-main); color: #ffffff; flex: 2; }
+    .btn-main:hover { background: #1e293b; }
+    .btn-sub { background: #f1f5f9; color: var(--text-muted); border: 1px solid var(--card-border); }
+    .btn-sub:hover { background: #e2e8f0; }
+    .btn:active { transform: translateY(1px); }
+
+    /* Compare list */
+    .list-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .list-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;
+    }
+    .list-heading { font-size: 1.05rem; font-weight: 700; }
+    .list-hint { font-size: 0.75rem; color: var(--text-light); }
+    .btn-clear {
+      background: var(--danger-light); border: 1px solid #fecaca; color: var(--danger);
+      padding: 6px 12px; border-radius: var(--radius-sm);
+      font-family: var(--font-main); font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    }
+    .item-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .item-row {
+      border: 1px solid var(--card-border); border-radius: var(--radius-md);
+      padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    }
+    .item-row.best { background: var(--best-light); border-color: var(--best-border); }
+    .item-left { flex: 1; min-width: 0; }
+    .item-name { font-size: 0.98rem; font-weight: 700; word-break: break-all; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .badge-best {
+      background: var(--best); color: #ffffff; font-size: 0.7rem; font-weight: 700;
+      padding: 1px 8px; border-radius: var(--radius-full);
+    }
+    .item-detail { font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-num); }
+    .item-amount {
+      font-family: var(--font-num); font-weight: 800; font-size: 1.05rem;
+      color: var(--primary-hover); white-space: nowrap; text-align: right;
+    }
+    .item-row.best .item-amount { color: #059669; }
+    .item-amount small { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+    .btn-delete {
+      background: none; border: none; color: var(--text-light); cursor: pointer;
+      padding: 6px; border-radius: 6px; display: flex;
+    }
+    .btn-delete:hover { color: var(--danger); background: var(--danger-light); }
+    .empty-state { text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: 0.85rem; }
+    .empty-state b { display: block; color: var(--text-main); font-size: 0.95rem; margin-bottom: 2px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(40px);
+      background: rgba(15, 23, 42, 0.94); color: #ffffff; padding: 10px 18px;
+      border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 600;
+      opacity: 0; visibility: hidden; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); z-index: 10;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
+
+    @media (max-width: 480px) {
+      body { padding: max(54px, calc(env(safe-area-inset-top) + 20px)) 12px 30px 12px; }
+      .form-grid { flex-wrap: wrap; gap: 8px; }
+      .flex-3 { flex: 100%; }
+      .result-number { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="app-header">
+      <div class="header-title-wrap">
+        <span class="header-icon">🧮</span>
+        <div>
+          <h1 class="header-title">개당 단가 계산기</h1>
+          <p class="header-sub">금액 ÷ 개수 = 1개당 가격</p>
+        </div>
+      </div>
+      <button type="button" class="action-btn" id="refreshBtn" title="새로고침">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+        새로고침
+      </button>
+    </header>
+
+    <section class="result-card" aria-live="polite">
+      <span class="result-label">1개당 가격</span>
+      <div class="result-row">
+        <span class="result-number" id="unitDisplay">0</span>
+        <span class="result-unit">원</span>
+      </div>
+      <span class="result-formula" id="formulaDisplay">금액과 개수를 입력하세요</span>
+    </section>
+
+    <section class="input-card">
+      <form id="calcForm" autocomplete="off">
+        <div class="form-grid">
+          <div class="field-col flex-3">
+            <label for="nameInput" class="field-title">상품명 (선택)</label>
+            <input type="text" class="text" id="nameInput" placeholder="예: 라면 5입, 생수 2L">
+          </div>
+          <div class="field-col flex-2">
+            <label for="priceInput" class="field-title">총 금액 (원)</label>
+            <input type="text" inputmode="numeric" id="priceInput" placeholder="금액">
+          </div>
+          <div class="field-col flex-1">
+            <label for="qtyInput" class="field-title">개수</label>
+            <input type="text" inputmode="decimal" id="qtyInput" placeholder="개수">
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top: 12px;">
+          <button type="button" class="btn btn-sub" id="resetBtn">지우기</button>
+          <button type="submit" class="btn btn-main">비교 목록에 담기</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="list-card">
+      <div class="list-header">
+        <div>
+          <h2 class="list-heading">단가 비교</h2>
+          <p class="list-hint">여러 상품을 담으면 제일 싼 게 표시돼요</p>
+        </div>
+        <button class="btn-clear" id="clearBtn" style="display: none;">전체삭제</button>
+      </div>
+      <ul class="item-list" id="itemList"></ul>
+      <div class="empty-state" id="emptyState">
+        <b>담은 상품이 없습니다.</b>
+        계산만 하려면 위에 입력만 하면 돼요.
+      </div>
+    </section>
+
+    <div id="toast" class="toast" role="status"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'unitPriceCompare';
+    const priceInput = document.getElementById('priceInput');
+    const qtyInput = document.getElementById('qtyInput');
+    const nameInput = document.getElementById('nameInput');
+    const unitDisplay = document.getElementById('unitDisplay');
+    const formulaDisplay = document.getElementById('formulaDisplay');
+    const itemList = document.getElementById('itemList');
+    const emptyState = document.getElementById('emptyState');
+    const clearBtn = document.getElementById('clearBtn');
+    const toast = document.getElementById('toast');
+
+    let items = [];
+    try { items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch (e) { items = []; }
+
+    function save() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch (e) {}
+    }
+
+    // 소수점은 최대 1자리, 정수면 그대로
+    function fmt(n) {
+      return n.toLocaleString('ko-KR', { maximumFractionDigits: 1 });
+    }
+
+    function getPrice() { return Number(priceInput.value.replace(/[^0-9]/g, '')) || 0; }
+    function getQty() { return Number(qtyInput.value.replace(/[^0-9.]/g, '')) || 0; }
+
+    function update() {
+      const price = getPrice();
+      const qty = getQty();
+      if (price > 0 && qty > 0) {
+        unitDisplay.textContent = fmt(price / qty);
+        formulaDisplay.textContent = `${fmt(price)}원 ÷ ${fmt(qty)}개`;
+      } else {
+        unitDisplay.textContent = '0';
+        formulaDisplay.textContent = '금액과 개수를 입력하세요';
+      }
+    }
+
+    // 금액 입력 시 천 단위 콤마 자동
+    priceInput.addEventListener('input', () => {
+      const digits = priceInput.value.replace(/[^0-9]/g, '');
+      priceInput.value = digits ? Number(digits).toLocaleString('ko-KR') : '';
+      update();
+    });
+
+    qtyInput.addEventListener('input', () => {
+      let v = qtyInput.value.replace(/[^0-9.]/g, '');
+      const firstDot = v.indexOf('.');
+      if (firstDot !== -1) v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
+      qtyInput.value = v;
+      update();
+    });
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(showToast.t);
+      showToast.t = setTimeout(() => toast.classList.remove('show'), 1600);
+    }
+
+    function render() {
+      itemList.innerHTML = '';
+      emptyState.style.display = items.length ? 'none' : 'block';
+      clearBtn.style.display = items.length ? 'block' : 'none';
+      if (!items.length) return;
+
+      const minUnit = Math.min(...items.map(i => i.price / i.qty));
+      items.forEach((item, idx) => {
+        const unit = item.price / item.qty;
+        const isBest = items.length > 1 && unit === minUnit;
+        const li = document.createElement('li');
+        li.className = 'item-row' + (isBest ? ' best' : '');
+
+        const left = document.createElement('div');
+        left.className = 'item-left';
+        const name = document.createElement('div');
+        name.className = 'item-name';
+        name.textContent = item.name;
+        if (isBest) {
+          const badge = document.createElement('span');
+          badge.className = 'badge-best';
+          badge.textContent = '최저가';
+          name.appendChild(badge);
+        }
+        const detail = document.createElement('div');
+        detail.className = 'item-detail';
+        detail.textContent = `${fmt(item.price)}원 ÷ ${fmt(item.qty)}개`;
+        left.append(name, detail);
+
+        const amount = document.createElement('div');
+        amount.className = 'item-amount';
+        amount.innerHTML = `${fmt(unit)}원<br><small>개당</small>`;
+
+        const del = document.createElement('button');
+        del.className = 'btn-delete';
+        del.title = '삭제';
+        del.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        del.addEventListener('click', () => {
+          items.splice(idx, 1);
+          save();
+          render();
+        });
+
+        li.append(left, amount, del);
+        itemList.appendChild(li);
+      });
+    }
+
+    function resetInputs() {
+      priceInput.value = '';
+      qtyInput.value = '';
+      nameInput.value = '';
+      update();
+    }
+
+    document.getElementById('calcForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const price = getPrice();
+      const qty = getQty();
+      if (!(price > 0 && qty > 0)) {
+        showToast('금액과 개수를 입력해 주세요');
+        (price > 0 ? qtyInput : priceInput).focus();
+        return;
+      }
+      const name = nameInput.value.trim() || `상품 ${items.length + 1}`;
+      items.push({ name, price, qty });
+      save();
+      render();
+      resetInputs();
+      showToast('비교 목록에 담았어요');
+      priceInput.focus();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      resetInputs();
+      priceInput.focus();
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', () => location.reload());
+
+    clearBtn.addEventListener('click', () => {
+      if (!confirm('비교 목록을 모두 지울까요?')) return;
+      items = [];
+      save();
+      render();
+    });
+
+    render();
+    update();
+  </script>
+</body>
+</html>
