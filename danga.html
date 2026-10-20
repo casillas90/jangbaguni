@@ -125,9 +125,8 @@
       border-radius: var(--radius-lg); padding: 18px 20px; box-shadow: var(--shadow-sm);
       display: flex; flex-direction: column; gap: 12px;
     }
-    .form-grid { display: flex; gap: 10px; }
+    .field-stack { display: flex; flex-direction: column; gap: 14px; }
     .field-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-    .flex-3 { flex: 3; } .flex-2 { flex: 2; } .flex-1 { flex: 1; }
     .field-title { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
     .field-col input {
       width: 100%; background: #f8fafc; border: 1.5px solid var(--card-border);
@@ -140,7 +139,29 @@
       border-color: var(--primary); background: #ffffff;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
+    #priceInput, #qtyInput { font-size: 1.3rem; padding: 12px 14px; }
     #qtyInput { text-align: center; }
+
+    /* 개수: - [입력] + */
+    .qty-stepper { display: flex; gap: 8px; }
+    .qty-stepper input { flex: 1; }
+    .step-btn {
+      width: 54px; flex-shrink: 0; border: 1.5px solid var(--card-border);
+      background: #ffffff; border-radius: var(--radius-md);
+      font-size: 1.5rem; font-weight: 600; color: var(--text-main);
+      cursor: pointer; touch-action: manipulation;
+    }
+    .step-btn:active { background: var(--primary-light); border-color: var(--primary-border); }
+
+    /* 자주 쓰는 개수 */
+    .qty-chips { display: flex; gap: 5px; margin-top: 4px; }
+    .qty-chip {
+      flex: 1; min-width: 0; padding: 8px 0; border-radius: var(--radius-full);
+      border: 1px solid var(--card-border); background: #f8fafc;
+      font-family: var(--font-num); font-size: 0.88rem; font-weight: 700; color: var(--text-muted);
+      cursor: pointer; touch-action: manipulation;
+    }
+    .qty-chip.active { background: var(--primary); border-color: var(--primary); color: #ffffff; }
 
     .btn-row { display: flex; gap: 8px; }
     .btn {
@@ -209,9 +230,11 @@
 
     @media (max-width: 480px) {
       body { padding: max(54px, calc(env(safe-area-inset-top) + 20px)) 12px 30px 12px; }
-      .form-grid { flex-wrap: wrap; gap: 8px; }
-      .flex-3 { flex: 100%; }
       .result-number { font-size: 2rem; }
+    }
+    @media (max-width: 400px) {
+      .header-title { font-size: 1.15rem; white-space: nowrap; }
+      .header-icon { width: 40px; height: 40px; font-size: 1.4rem; }
     }
   </style>
 </head>
@@ -250,18 +273,31 @@
 
     <section class="input-card">
       <form id="calcForm" autocomplete="off">
-        <div class="form-grid">
-          <div class="field-col flex-3">
-            <label for="nameInput" class="field-title">상품명 (선택)</label>
-            <input type="text" class="text" id="nameInput" placeholder="예: 라면 5입, 생수 2L">
-          </div>
-          <div class="field-col flex-2">
+        <div class="field-stack">
+          <div class="field-col">
             <label for="priceInput" class="field-title">총 금액 (원)</label>
-            <input type="text" inputmode="numeric" id="priceInput" placeholder="금액">
+            <input type="text" inputmode="numeric" enterkeyhint="next" id="priceInput" placeholder="금액 입력">
           </div>
-          <div class="field-col flex-1">
+          <div class="field-col">
             <label for="qtyInput" class="field-title">개수</label>
-            <input type="text" inputmode="decimal" id="qtyInput" placeholder="개수">
+            <div class="qty-stepper">
+              <button type="button" class="step-btn" data-step="-1" aria-label="개수 1 줄이기">−</button>
+              <input type="text" inputmode="decimal" enterkeyhint="done" id="qtyInput" placeholder="개수">
+              <button type="button" class="step-btn" data-step="1" aria-label="개수 1 늘리기">+</button>
+            </div>
+            <div class="qty-chips" id="qtyChips">
+              <button type="button" class="qty-chip">2</button>
+              <button type="button" class="qty-chip">4</button>
+              <button type="button" class="qty-chip">6</button>
+              <button type="button" class="qty-chip">10</button>
+              <button type="button" class="qty-chip">12</button>
+              <button type="button" class="qty-chip">20</button>
+              <button type="button" class="qty-chip">30</button>
+            </div>
+          </div>
+          <div class="field-col">
+            <label for="nameInput" class="field-title">상품명 (선택 · 비교할 때만)</label>
+            <input type="text" class="text" enterkeyhint="done" id="nameInput" placeholder="예: 라면 5입, 생수 2L">
           </div>
         </div>
         <div class="btn-row" style="margin-top: 12px;">
@@ -319,6 +355,7 @@
     function update() {
       const price = getPrice();
       const qty = getQty();
+      document.querySelectorAll('.qty-chip').forEach(c => c.classList.toggle('active', Number(c.textContent) === qty));
       if (price > 0 && qty > 0) {
         unitDisplay.textContent = fmt(price / qty);
         formulaDisplay.textContent = `${fmt(price)}원 ÷ ${fmt(qty)}개`;
@@ -341,6 +378,36 @@
       if (firstDot !== -1) v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
       qtyInput.value = v;
       update();
+    });
+
+    function setQty(n) {
+      qtyInput.value = n > 0 ? String(Math.round(n * 10) / 10) : '';
+      update();
+    }
+
+    // − / + 버튼 (소수 개수면 1 단위로 반올림해서 이동)
+    document.querySelectorAll('.step-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const step = Number(btn.dataset.step);
+        const cur = getQty();
+        const next = step > 0 ? Math.floor(cur) + 1 : Math.ceil(cur) - 1;
+        setQty(Math.max(next, 1));
+      });
+    });
+
+    // 자주 쓰는 개수 버튼
+    document.getElementById('qtyChips').addEventListener('click', (e) => {
+      const chip = e.target.closest('.qty-chip');
+      if (chip) setQty(Number(chip.textContent));
+    });
+
+    // 금액 입력 후 키보드 '다음' → 개수 칸으로
+    priceInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); qtyInput.focus(); }
+    });
+    // 개수 입력 후 '완료' → 키보드만 닫기 (목록에 담지 않음)
+    qtyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); qtyInput.blur(); }
     });
 
     function showToast(msg) {
