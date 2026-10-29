@@ -8,281 +8,55 @@
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <meta name="apple-mobile-web-app-title" content="단가계산">
-  <style>
-    :root {
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --primary-light: #eff6ff;
-      --primary-border: #bfdbfe;
-      --best: #10b981;
-      --best-light: #ecfdf5;
-      --best-border: #a7f3d0;
-      --bg-app: #f8fafc;
-      --card-bg: #ffffff;
-      --card-border: #e2e8f0;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --text-light: #94a3b8;
-      --danger: #ef4444;
-      --danger-light: #fef2f2;
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-      --shadow-lg: 0 10px 25px -4px rgba(59, 130, 246, 0.2);
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 18px;
-      --radius-full: 9999px;
-      --font-main: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Segoe UI", Roboto, sans-serif;
-      --font-num: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-    html, body { background: var(--bg-app); overscroll-behavior-y: none; }
-
-    body {
-      font-family: var(--font-main);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: max(48px, calc(env(safe-area-inset-top) + 20px)) 14px max(40px, env(safe-area-inset-bottom)) 14px;
-      line-height: 1.5;
-    }
-
-    .app-layout { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
-
-    /* 장바구니 / 단가계산 전환 탭 */
-    .page-tabs {
-      display: flex;
-      background: #e2e8f0;
-      border-radius: var(--radius-md);
-      padding: 4px;
-      gap: 4px;
-    }
-
-    .page-tab {
-      flex: 1;
-      text-align: center;
-      padding: 9px 0;
-      border-radius: 9px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-decoration: none;
-      transition: all 0.15s;
-    }
-
-    .page-tab.active {
-      background: var(--card-bg);
-      color: var(--text-main);
-      box-shadow: var(--shadow-sm);
-    }
-
-    /* Header */
-    .app-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 2px; }
-    .header-title-wrap { display: flex; align-items: center; gap: 10px; }
-    .action-btn {
-      background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main);
-      height: 38px; padding: 0 12px; border-radius: var(--radius-md);
-      display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: var(--shadow-sm);
-      font-family: var(--font-main); font-size: 0.82rem; font-weight: 600; white-space: nowrap;
-      transition: all 0.2s;
-    }
-    .action-btn:hover { background: #f1f5f9; }
-    .action-btn:active svg { transform: rotate(180deg); }
-    .action-btn svg { transition: transform 0.3s; }
-    .header-icon {
-      font-size: 1.6rem; background: var(--card-bg); border: 1px solid var(--card-border);
-      width: 44px; height: 44px; border-radius: var(--radius-md);
-      display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);
-    }
-    .header-title { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
-    .header-sub { font-size: 0.8rem; color: var(--text-muted); }
-
-    /* Result card */
-    .result-card {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: #ffffff; border-radius: var(--radius-lg); padding: 22px 24px;
-      box-shadow: var(--shadow-lg);
-    }
-    .result-label { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.88); }
-    .result-row { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
-    .result-number {
-      font-family: var(--font-num); font-size: 2.4rem; font-weight: 800;
-      letter-spacing: -0.03em; line-height: 1.15; word-break: break-all;
-    }
-    .result-unit { font-size: 1.1rem; font-weight: 700; color: rgba(255, 255, 255, 0.9); }
-    .result-formula {
-      margin-top: 8px; display: inline-block; background: rgba(0, 0, 0, 0.2);
-      padding: 4px 12px; border-radius: var(--radius-full);
-      font-size: 0.8rem; font-weight: 600; font-family: var(--font-num);
-    }
-
-    /* Input card */
-    .input-card {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: var(--radius-lg); padding: 18px 20px; box-shadow: var(--shadow-sm);
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .field-stack { display: flex; flex-direction: column; gap: 14px; }
-    .field-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-    .field-title { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
-    .field-col input {
-      width: 100%; background: #f8fafc; border: 1.5px solid var(--card-border);
-      border-radius: var(--radius-md); padding: 13px 12px;
-      font-family: var(--font-num); font-size: 1.05rem; font-weight: 700;
-      color: var(--text-main); outline: none; transition: all 0.2s;
-    }
-    .field-col input.text { font-family: var(--font-main); font-weight: 500; font-size: 0.95rem; }
-    .field-col input:focus {
-      border-color: var(--primary); background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    }
-    #priceInput, #qtyInput { font-size: 1.3rem; padding: 12px 14px; }
-    #qtyInput { text-align: center; }
-
-    /* 개수: - [입력] + */
-    .qty-stepper { display: flex; gap: 8px; }
-    .qty-stepper input { flex: 1; }
-    .step-btn {
-      width: 54px; flex-shrink: 0; border: 1.5px solid var(--card-border);
-      background: #ffffff; border-radius: var(--radius-md);
-      font-size: 1.5rem; font-weight: 600; color: var(--text-main);
-      cursor: pointer; touch-action: manipulation;
-    }
-    .step-btn:active { background: var(--primary-light); border-color: var(--primary-border); }
-
-    /* 자주 쓰는 개수 */
-    .qty-chips { display: flex; gap: 5px; margin-top: 4px; }
-    .qty-chip {
-      flex: 1; min-width: 0; padding: 8px 0; border-radius: var(--radius-full);
-      border: 1px solid var(--card-border); background: #f8fafc;
-      font-family: var(--font-num); font-size: 0.88rem; font-weight: 700; color: var(--text-muted);
-      cursor: pointer; touch-action: manipulation;
-    }
-    .qty-chip.active { background: var(--primary); border-color: var(--primary); color: #ffffff; }
-
-    .btn-row { display: flex; gap: 8px; }
-    .btn {
-      flex: 1; border: none; border-radius: var(--radius-md); padding: 12px;
-      font-family: var(--font-main); font-size: 0.92rem; font-weight: 700;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .btn-main { background: var(--text-main); color: #ffffff; flex: 2; }
-    .btn-main:hover { background: #1e293b; }
-    .btn-sub { background: #f1f5f9; color: var(--text-muted); border: 1px solid var(--card-border); }
-    .btn-sub:hover { background: #e2e8f0; }
-    .btn:active { transform: translateY(1px); }
-
-    /* Compare list */
-    .list-card {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .list-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;
-    }
-    .list-heading { font-size: 1.05rem; font-weight: 700; }
-    .list-hint { font-size: 0.75rem; color: var(--text-light); }
-    .btn-clear {
-      background: var(--danger-light); border: 1px solid #fecaca; color: var(--danger);
-      padding: 6px 12px; border-radius: var(--radius-sm);
-      font-family: var(--font-main); font-size: 0.78rem; font-weight: 700; cursor: pointer;
-    }
-    .item-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .item-row {
-      border: 1px solid var(--card-border); border-radius: var(--radius-md);
-      padding: 12px 14px; display: flex; align-items: center; gap: 12px;
-    }
-    .item-row.best { background: var(--best-light); border-color: var(--best-border); }
-    .item-left { flex: 1; min-width: 0; }
-    .item-name { font-size: 0.98rem; font-weight: 700; word-break: break-all; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .badge-best {
-      background: var(--best); color: #ffffff; font-size: 0.7rem; font-weight: 700;
-      padding: 1px 8px; border-radius: var(--radius-full);
-    }
-    .item-detail { font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-num); }
-    .item-amount {
-      font-family: var(--font-num); font-weight: 800; font-size: 1.05rem;
-      color: var(--primary-hover); white-space: nowrap; text-align: right;
-    }
-    .item-row.best .item-amount { color: #059669; }
-    .item-amount small { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
-    .btn-delete {
-      background: none; border: none; color: var(--text-light); cursor: pointer;
-      padding: 6px; border-radius: 6px; display: flex;
-    }
-    .btn-delete:hover { color: var(--danger); background: var(--danger-light); }
-    .empty-state { text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: 0.85rem; }
-    .empty-state b { display: block; color: var(--text-main); font-size: 0.95rem; margin-bottom: 2px; }
-
-    /* Toast */
-    .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(40px);
-      background: rgba(15, 23, 42, 0.94); color: #ffffff; padding: 10px 18px;
-      border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 600;
-      opacity: 0; visibility: hidden; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); z-index: 10;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
-
-    @media (max-width: 480px) {
-      body { padding: max(54px, calc(env(safe-area-inset-top) + 20px)) 12px 30px 12px; }
-      .result-number { font-size: 2rem; }
-    }
-    @media (max-width: 400px) {
-      .header-title { font-size: 1.15rem; white-space: nowrap; }
-      .header-icon { width: 40px; height: 40px; font-size: 1.4rem; }
-    }
-  </style>
+  <meta name="theme-color" id="themeColorMeta" content="#f4f5f7">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
 </head>
 <body>
   <div class="app-layout">
-    <nav class="page-tabs">
-      <a href="index.html" class="page-tab">🛒 장바구니</a>
-      <a href="danga.html" class="page-tab active" aria-current="page">🧮 단가계산</a>
-    </nav>
-
     <header class="app-header">
-      <div class="header-title-wrap">
-        <span class="header-icon">🧮</span>
-        <div>
-          <h1 class="header-title">개당 단가 계산기</h1>
-          <p class="header-sub">금액 ÷ 개수 = 1개당 가격</p>
-        </div>
+      <div>
+        <h1 class="header-title">개당 단가 계산기</h1>
+        <p class="header-sub">금액 ÷ 개수 = 1개당 가격</p>
       </div>
-      <button type="button" class="action-btn" id="refreshBtn" title="새로고침">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"></polyline>
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-        </svg>
-        새로고침
-      </button>
+      <div class="header-actions">
+        <button type="button" class="icon-btn" id="refreshBtn" title="새로고침" aria-label="새로고침">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+        </button>
+        <button type="button" id="btnTheme" class="icon-btn" title="다크 모드" aria-label="다크 모드">
+          <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/><path d="M12 1.5v2.5M12 20v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M1.5 12H4M20 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+        </button>
+      </div>
     </header>
 
-    <section class="result-card" aria-live="polite">
-      <span class="result-label">1개당 가격</span>
-      <div class="result-row">
-        <span class="result-number" id="unitDisplay">0</span>
-        <span class="result-unit">원</span>
+    <nav class="page-tabs">
+      <a href="index.html" class="page-tab">장바구니</a>
+      <a href="danga.html" class="page-tab active" aria-current="page">단가계산</a>
+    </nav>
+
+    <section class="card" aria-live="polite">
+      <span class="card-label">1개당 가격</span>
+      <div class="hero-row">
+        <span class="hero-number" id="unitDisplay">0</span>
+        <span class="hero-unit">원</span>
       </div>
-      <span class="result-formula" id="formulaDisplay">금액과 개수를 입력하세요</span>
+      <span class="hero-meta" id="formulaDisplay">금액과 개수를 입력하세요</span>
     </section>
 
-    <section class="input-card">
+    <section class="card">
       <form id="calcForm" autocomplete="off">
         <div class="field-stack">
           <div class="field-col">
             <label for="priceInput" class="field-title">총 금액 (원)</label>
-            <input type="text" inputmode="numeric" enterkeyhint="next" id="priceInput" placeholder="금액 입력">
+            <input type="text" inputmode="numeric" enterkeyhint="next" id="priceInput" class="num-input big" placeholder="금액 입력">
           </div>
           <div class="field-col">
             <label for="qtyInput" class="field-title">개수</label>
             <div class="qty-stepper">
               <button type="button" class="step-btn" data-step="-1" aria-label="개수 1 줄이기">−</button>
-              <input type="text" inputmode="decimal" enterkeyhint="done" id="qtyInput" placeholder="개수">
+              <input type="text" inputmode="decimal" enterkeyhint="done" id="qtyInput" class="num-input big center" placeholder="개수">
               <button type="button" class="step-btn" data-step="1" aria-label="개수 1 늘리기">+</button>
             </div>
             <div class="qty-chips" id="qtyChips">
@@ -297,28 +71,28 @@
           </div>
           <div class="field-col">
             <label for="nameInput" class="field-title">상품명 (선택 · 비교할 때만)</label>
-            <input type="text" class="text" enterkeyhint="done" id="nameInput" placeholder="예: 라면 5입, 생수 2L">
+            <input type="text" enterkeyhint="done" id="nameInput" placeholder="예: 라면 5입, 생수 2L">
           </div>
         </div>
-        <div class="btn-row" style="margin-top: 12px;">
-          <button type="button" class="btn btn-sub" id="resetBtn">지우기</button>
-          <button type="submit" class="btn btn-main">비교 목록에 담기</button>
+        <div class="btn-row" style="margin-top: 20px;">
+          <button type="button" class="btn btn-secondary" id="resetBtn">지우기</button>
+          <button type="submit" class="btn btn-primary">비교 목록에 담기</button>
         </div>
       </form>
     </section>
 
-    <section class="list-card">
+    <section class="card">
       <div class="list-header">
         <div>
           <h2 class="list-heading">단가 비교</h2>
           <p class="list-hint">여러 상품을 담으면 제일 싼 게 표시돼요</p>
         </div>
-        <button class="btn-clear" id="clearBtn" style="display: none;">전체삭제</button>
+        <button class="btn-ghost danger" id="clearBtn" style="display: none;">전체삭제</button>
       </div>
       <ul class="item-list" id="itemList"></ul>
       <div class="empty-state" id="emptyState">
-        <b>담은 상품이 없습니다.</b>
-        계산만 하려면 위에 입력만 하면 돼요.
+        <p class="empty-main">담은 상품이 없어요</p>
+        <span class="empty-subtext">계산만 하려면 위에 입력만 하면 돼요</span>
       </div>
     </section>
 
@@ -419,7 +193,7 @@
 
     function render() {
       itemList.innerHTML = '';
-      emptyState.style.display = items.length ? 'none' : 'block';
+      emptyState.style.display = items.length ? 'none' : 'flex';
       clearBtn.style.display = items.length ? 'block' : 'none';
       if (!items.length) return;
 
@@ -448,7 +222,7 @@
 
         const amount = document.createElement('div');
         amount.className = 'item-amount';
-        amount.innerHTML = `${fmt(unit)}원<br><small>개당</small>`;
+        amount.innerHTML = `${fmt(unit)}원<small>개당</small>`;
 
         const del = document.createElement('button');
         del.className = 'btn-delete';

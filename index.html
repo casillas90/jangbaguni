@@ -12,111 +12,87 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-title" content="장바구니">
+  <meta name="theme-color" id="themeColorMeta" content="#f4f5f7">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
   <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
 </head>
 <body>
   <div class="app-layout">
-    <nav class="page-tabs">
-      <a href="index.html" class="page-tab active" aria-current="page">🛒 장바구니</a>
-      <a href="danga.html" class="page-tab">🧮 단가계산</a>
-    </nav>
-
-    <!-- Clean Minimalist Header -->
     <header class="app-header">
-      <div class="header-title-wrap">
-        <span class="header-icon">🛒</span>
-        <div>
-          <h1 class="header-title">장바구니 계산기</h1>
-          <p class="header-date" id="currentDateDisplay">오늘의 장보기</p>
-        </div>
+      <div>
+        <h1 class="header-title">장바구니 계산기</h1>
+        <p class="header-sub" id="currentDateDisplay">오늘의 장보기</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="btnTheme" class="icon-btn" title="다크 모드" aria-label="다크 모드">
+          <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/><path d="M12 1.5v2.5M12 20v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M1.5 12H4M20 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+        </button>
       </div>
     </header>
 
-    <!-- Total Sum Banner (Realtime Auto Calculation) -->
-    <section class="total-card" aria-label="총 금액">
-      <div class="total-content">
-        <span class="total-label">총 합산 금액</span>
-        <div class="total-amount-row">
-          <span class="total-number" id="totalSumDisplay">0</span>
-          <span class="total-unit">원</span>
-        </div>
+    <nav class="page-tabs">
+      <a href="index.html" class="page-tab active" aria-current="page">장바구니</a>
+      <a href="danga.html" class="page-tab">단가계산</a>
+    </nav>
+
+    <!-- 총 금액 (실시간 자동 합산) -->
+    <section class="card" aria-label="총 금액">
+      <span class="card-label">총 합산 금액</span>
+      <div class="hero-row">
+        <span class="hero-number" id="totalSumDisplay">0</span>
+        <span class="hero-unit">원</span>
       </div>
-      <div class="total-count-badge" id="totalCountBadge">
-        총 0개 품목
-      </div>
+      <span class="hero-meta" id="totalCountBadge">총 0개 품목</span>
     </section>
 
-    <!-- Fast Input Section -->
-    <section class="input-card">
+    <!-- 빠른 입력 -->
+    <section class="card">
       <form id="itemForm" class="input-form" autocomplete="off">
         <div class="form-grid">
-          <!-- Item Name -->
           <div class="field-col flex-3">
             <label for="nameInput" class="field-title">품목</label>
-            <input type="text" id="nameInput" placeholder="품목명 (예: 사과, 계란, 우유)" required>
+            <input type="text" id="nameInput" placeholder="예: 사과, 계란, 우유" required>
           </div>
-          <!-- Item Price -->
           <div class="field-col flex-2">
             <label for="priceInput" class="field-title">금액 (원)</label>
-            <input type="text" inputmode="numeric" id="priceInput" placeholder="금액 입력" required>
+            <input type="text" inputmode="numeric" id="priceInput" class="num-input" placeholder="금액 입력" required>
           </div>
-          <!-- Item Quantity -->
           <div class="field-col flex-1">
             <label for="qtyInput" class="field-title">수량</label>
-            <input type="number" id="qtyInput" value="1" min="1" max="999">
+            <input type="number" id="qtyInput" class="num-input center" value="1" min="1" max="999">
           </div>
         </div>
-        <button type="submit" class="btn-add" id="addBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          품목 추가하기 (Enter)
-        </button>
+        <button type="submit" class="btn btn-primary" id="addBtn">담기</button>
       </form>
     </section>
 
-    <!-- Shopping Items List -->
-    <section class="list-card">
+    <!-- 장보기 목록 -->
+    <section class="card">
       <div class="list-header">
         <div class="list-header-left">
           <h2 class="list-heading">장보기 목록</h2>
           <span class="list-count" id="listCountBadge">0개</span>
         </div>
-        <!-- Prominent '담은 품목 전체삭제' button in the header -->
-        <button id="clearAllBtn" class="btn-clear-all" title="담은 품목 전체삭제">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-          담은 품목 전체삭제
-        </button>
+        <button id="clearAllBtn" class="btn-ghost danger">전체삭제</button>
       </div>
 
       <ul class="item-list" id="itemList">
         <!-- Rendered dynamically -->
       </ul>
 
-      <!-- Empty State -->
       <div class="empty-state" id="emptyState">
-        <div class="empty-emoji">📝</div>
-        <p class="empty-main">담은 품목이 없습니다.</p>
-        <span class="empty-subtext">위 입력창에 품목과 금액을 적으면 자동으로 금액이 합산됩니다.</span>
+        <p class="empty-main">담은 품목이 없어요</p>
+        <span class="empty-subtext">위에 품목과 금액을 적으면 자동으로 더해져요</span>
       </div>
 
-      <!-- Bottom Clear All Bar (Visible when there are items) -->
+      <!-- 품목이 많을 때 아래에도 전체삭제 -->
       <div class="list-footer" id="listFooter" style="display: none;">
-        <button id="bottomClearAllBtn" class="btn-bottom-clear">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-          담은 품목 전체삭제
-        </button>
+        <button id="bottomClearAllBtn" class="btn-ghost danger">담은 품목 전체삭제</button>
       </div>
     </section>
 
-    <!-- Toast Notification -->
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
 
